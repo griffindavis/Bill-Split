@@ -7,17 +7,48 @@
 
 import SwiftUI
 
-struct EditBillView: View {
-    @ObservedObject var bill: Bill
-    @EnvironmentObject var model: Model
+enum DefaultPercent: String, CaseIterable, Identifiable {
+    case p18 = "18%"
+    case p20 = "20%"
+    case p22 = "22%"
+    case custom = "Custom"
 
+    var id: String { rawValue }
+
+    var percentage: Double? {
+        switch self {
+        case .p18: return 0.18
+        case .p20: return 0.20
+        case .p22: return 0.22
+        case .custom: return nil
+        }
+    }
+}
+
+struct EditBillView: View {
+    
+    /// The bill that the user is editing
+    @ObservedObject var bill: Bill
+    
+    
+    /// The app level data such as other bills and the people to add to bills
+    @EnvironmentObject var model: Model
+    
+    /// Object to modify for creating new items
     @StateObject private var newItem = BillItem(
         name: "",
         price: 0.0,
         splitWith: Set<Person>()
     )
 
+    /// The percent tip to calculate
+    @State private var percentTip: DefaultPercent = .custom
+
+    /// Handles jumping focus between edit fields
     @FocusState private var focus: FocusFields?
+
+    /// For showing and hiding the taxes, tips, and fees
+    @State private var showExtras: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -57,32 +88,55 @@ struct EditBillView: View {
                         .background(bill.discrepancy == 0 ? .green : .red)
                         .clipShape(Capsule())
                     }
-                    HStack {
-                        Label("Tax:", systemImage: "percent")
-                        TextField(
-                            "",
-                            value: $bill.tax,
-                            format: .number.precision(.fractionLength(2))
-                        )
-                        .keyboardType(.decimalPad)
-                    }
-                    HStack {
-                        Label("Fees:", systemImage: "doc.text")
-                        TextField(
-                            "",
-                            value: $bill.fees,
-                            format: .number.precision(.fractionLength(2))
-                        )
-                        .keyboardType(.decimalPad)
-                    }
-                    HStack {
-                        Label("Tip:", systemImage: "hand.thumbsup")
-                        TextField(
-                            "",
-                            value: $bill.tip,
-                            format: .number.precision(.fractionLength(2))
-                        )
-                        .keyboardType(.decimalPad)
+                }
+                Section {
+                    DisclosureGroup(isExpanded: $showExtras) {
+                        HStack {
+                            Label("Tax:", systemImage: "percent")
+                            TextField(
+                                "",
+                                value: $bill.tax,
+                                format: .number.precision(.fractionLength(2))
+                            )
+                            .keyboardType(.decimalPad)
+                        }
+                        HStack {
+                            Label("Fee:", systemImage: "doc.text")
+                            TextField(
+                                "",
+                                value: $bill.fees,
+                                format: .number.precision(.fractionLength(2))
+                            )
+                            .keyboardType(.decimalPad)
+                        }
+                        HStack {
+                            Label("Tip:", systemImage: "hand.thumbsup")
+                            TextField(
+                                "",
+                                value: $bill.tip,
+                                format: .number.precision(.fractionLength(2))
+                            )
+                            .keyboardType(.decimalPad)
+                        }
+                        HStack {
+                            Picker("", selection: $percentTip) {
+                                ForEach(DefaultPercent.allCases) { option in
+                                    Text(option.rawValue).tag(option)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                        .onChange(of: percentTip) { _, newValue in
+                            if let percentage = newValue.percentage {
+                                bill.tip = bill.itemTotal * percentage
+                            }
+                        }
+                    } label: {
+                        HStack {
+                            Label("Extras", systemImage: "doc.text")
+                            Spacer()
+                            Text(bill.feeTotal.formatted(.currency(code: "USD")))
+                        }
                     }
                 }
                 Section(
@@ -120,7 +174,9 @@ struct EditBillView: View {
                         Text("Add Item")
                         Spacer()
                         Button("Add") {
-                            bill.items.insert(newItem.copy(), at: 0)
+                            withAnimation {
+                                bill.items.insert(newItem.copy(), at: 0)
+                            }
                             newItem.name = ""
                             newItem.price = 0
                             focus = nil
@@ -130,45 +186,47 @@ struct EditBillView: View {
                 ) {
                     ItemEditFields(item: newItem, focus: $focus)
                 }
-                Section(
-                    header:
-                        HStack {
-                            Text("Items")
-                            Spacer()
-                            Button("Sync Total") {
-                                bill.amount = bill.items.reduce(0) {
-                                    $0 + $1.price
-                                }
-                            }
-                            .disabled(bill.discrepancy == 0)
-                        }
-                ) {
-                    ForEach(bill.items, id: \.self) { item in
-                        NavigationLink(
-                            destination: ItemSplitView(
-                                item: item,
-                                people: bill.people
-                            )
-                        ) {
+                if !bill.items.isEmpty {
+                    Section(
+                        header:
                             HStack {
-                                if item.splitWith.count == 0 {
-                                    Label {
-                                        Text(item.name)
-                                    } icon: {
-                                        Image(systemName: "person.crop.circle.badge.plus")
-                                            .foregroundStyle(.red) // only affects the image
-                                    }
-                                } else {
-                                    Label(item.name, systemImage: "checkmark")
-                                }
+                                Text("Items")
                                 Spacer()
-                                Text(
-                                    item.price.formatted(.currency(code: "USD"))
+                                Button("Sync Total") {
+                                    bill.amount = bill.items.reduce(0) {
+                                        $0 + $1.price
+                                    }
+                                }
+                                .disabled(bill.discrepancy == 0)
+                            }
+                    ) {
+                        ForEach(bill.items, id: \.self) { item in
+                            NavigationLink(
+                                destination: ItemSplitView(
+                                    item: item,
+                                    people: bill.people
                                 )
+                            ) {
+                                HStack {
+                                    if item.splitWith.count == 0 {
+                                        Label {
+                                            Text(item.name)
+                                        } icon: {
+                                            Image(systemName: "person.crop.circle.badge.plus")
+                                                .foregroundStyle(.red)  // only affects the image
+                                        }
+                                    } else {
+                                        Label(item.name, systemImage: "checkmark")
+                                    }
+                                    Spacer()
+                                    Text(
+                                        item.price.formatted(.currency(code: "USD"))
+                                    )
+                                }
                             }
                         }
+                        .onDelete(perform: bill.deleteItems)
                     }
-                    .onDelete(perform: bill.deleteItems)
                 }
             }
             .onAppear {

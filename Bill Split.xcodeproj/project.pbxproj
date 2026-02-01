@@ -35,16 +35,6 @@
 			path = "Bill Split";
 			sourceTree = "<group>";
 		};
-		1694592F2ED0D9A700DC4A09 /* Bill SplitTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Bill SplitTests";
-			sourceTree = "<group>";
-		};
-		169459392ED0D9A700DC4A09 /* Bill SplitUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "Bill SplitUITests";
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				169459212ED0D9A500DC4A09 /* Bill Split */,
-				1694592F2ED0D9A700DC4A09 /* Bill SplitTests */,
-				169459392ED0D9A700DC4A09 /* Bill SplitUITests */,
 				169459202ED0D9A500DC4A09 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				1694592E2ED0D9A700DC4A09 /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				1694592F2ED0D9A700DC4A09 /* Bill SplitTests */,
-			);
 			name = "Bill SplitTests";
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				169459382ED0D9A700DC4A09 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				169459392ED0D9A700DC4A09 /* Bill SplitUITests */,
 			);
 			name = "Bill SplitUITests";
 			packageProductDependencies = (

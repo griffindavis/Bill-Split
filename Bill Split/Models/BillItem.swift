@@ -9,11 +9,17 @@ import Foundation
 import Combine
 
 class BillItem: Identifiable, Hashable, ObservableObject {
+    
+    /// Identifier
     var id: UUID = UUID()
+    
+    /// Base published details
     @Published var name: String
     @Published var price: Double
     @Published var splitWith: Set<Person>
     
+    
+    /// Amount this will cost per person, dependent on how many people split it
     var amountPerPerson: Double {
         if splitWith.count == 0 {
             return price
@@ -21,6 +27,7 @@ class BillItem: Identifiable, Hashable, ObservableObject {
         return price / Double(splitWith.count)
     }
     
+    /// Helper to determine if the item is valid to save
     var valid: Bool {
         name != "" && price != 0
     }

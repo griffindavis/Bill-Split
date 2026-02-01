@@ -9,7 +9,11 @@ import Foundation
 import Combine
 
 class Model: ObservableObject {
+    
+    /// Set of bills stored in the app
     @Published var bills: [Bill] = []
+    
+    /// The people that are allowed to split bills
     @Published var people: [Person] = []
     
     init(bills: [Bill], people: [Person]) {
@@ -19,6 +23,7 @@ class Model: ObservableObject {
     
     init() {
         
+        // This is just for testing
         let peopleArray = [
             Person(name: "Griffin"),
             Person(name: "Caroline"),
