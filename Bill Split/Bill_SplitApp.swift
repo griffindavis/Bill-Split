@@ -9,9 +9,13 @@ import SwiftUI
 
 @main
 struct Bill_SplitApp: App {
+    
+    @StateObject var model: Model = Model()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(model)
         }
     }
 }
